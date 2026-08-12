@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(./.venv/bin/python - <<'EOF' import json, pathlib p = pathlib.Path(\"4_batsman_workflow.ipynb\") nb = json.loads(p.read_text()) def get_source(cell): return \"\".join(cell[\"source\"]) if isinstance(cell[\"source\"], list) else cell[\"source\"] changed = [] for c in nb[\"cells\"]: if c.get(\"cell_type\") != \"code\": continue src = get_source(c) # Remove graph creation from the state-class cell if \"class BatsmanState\" in src and \"graph = StateGraph(BatsmanState)\" in src: new = src.replace(\"\\ngraph = StateGraph(BatsmanState)\", \"\") if new != src: c[\"source\"] = new.splitlines(keepends=True) changed.append(\"state-cell\") # Make the add-node cell self-contained and fix the summary node name if \"graph.add_node\" in src: new = \"graph = StateGraph(BatsmanState)\\n\\n\" + src new = new.replace( 'graph.add_node(\"summary\", calculate_summary)', 'graph.add_node(\"calculate_summary\", calculate_summary)', ) new = new.replace(\"graph.compile()\", \"app = graph.compile()\") c[\"source\"] = new.splitlines(keepends=True) changed.append(\"graph-cell\") p.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + \"\\n\") print(\"edited cells:\", changed) EOF)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}
