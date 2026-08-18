@@ -1,10 +1,58 @@
 import streamlit as st
 from langgraph_backend import chatbot, HumanMessage
+import uuid
 
-CONFIG = {"configurable": {"thread_id": "thread-1"}}
+
+def generate_thread_id():
+    thread_id = uuid.uuid4()
+    return thread_id
+
+def start_new():
+    thread_id = generate_thread_id()
+    st.session_state['thread_id'] = thread_id
+    st.session_state['chat_threads'].append(thread_id)
+    st.session_state['message_history'] = []
+
+def load_chats(thread_id):
+    state = chatbot.get_state({"configurable": {"thread_id": thread_id}})
+    if state.values:
+        return state.values['messages']
+    return []
+
 
 if 'message_history' not in st.session_state:
     st.session_state['message_history'] = []
+
+if "chat_threads" not in st.session_state:
+    st.session_state["chat_threads"] = []
+
+if 'thread_id' not in st.session_state:
+    thread_id = generate_thread_id()
+    print(thread_id)
+    st.session_state['thread_id'] = thread_id
+    st.session_state['chat_threads'].append(thread_id)
+
+CONFIG = {"configurable": {"thread_id": st.session_state['thread_id']}}
+
+
+st.sidebar.title('GraphBot')
+if st.sidebar.button('New chat'):
+    start_new()
+st.sidebar.header('My Conversations')
+for thread in st.session_state['chat_threads']:
+    if st.sidebar.button(str(thread)):
+        st.session_state['thread_id'] = thread
+        messages = load_chats(thread)
+        temp_messages = []
+        for msg in messages:
+            print('isinstance ', isinstance(msg, HumanMessage))
+
+            if isinstance(msg, HumanMessage):
+                role = 'user'
+            else:
+                role = 'assistant'
+            temp_messages.append({'role': role, 'content': msg.content})
+        st.session_state['message_history'] = temp_messages
 
 for message in st.session_state['message_history']:
     with st.chat_message(message['role']):
@@ -22,4 +70,3 @@ if user_input:
         stream_mode='messages'
     ))
     st.session_state['message_history'].append({'role': 'assistant', 'content': response})
-    
