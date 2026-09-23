@@ -34,7 +34,6 @@ if 'thread_id' not in st.session_state:
 
 CONFIG = {"configurable": {"thread_id": st.session_state['thread_id']}}
 
-
 st.sidebar.title('GraphBot')
 if st.sidebar.button('New chat'):
     start_new()
